@@ -9,7 +9,6 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/spf13/viper"
 )
@@ -49,8 +48,8 @@ func init() {
 func main() {
 	go srv.ListenAndServe()
 	defer srv.Close()
-	c := make(chan os.Signal, 1)
 	log.Println("listening")
+	c := make(chan os.Signal, 1)
 	signal.Notify(c, syscall.SIGINT, syscall.SIGTERM)
 	log.Println("exiting:", <-c)
 }
@@ -62,49 +61,10 @@ func txHandleFunc(w http.ResponseWriter, r *http.Request) {
 	tid := rand.Int63n(int64(scale*10)) + 1
 	bid := rand.Int63n(int64(scale)) + 1
 	delta := rand.Int63n(10000) - 5000
-	tx, err := pool.BeginTx(ctx, pgx.TxOptions{})
-	if err != nil {
+	if _, err := pool.Exec(ctx,
+		`SELECT pgbench_tx($1, $2, $3, $4)`, aid, tid, bid, int32(delta)); err != nil {
 		log.Println(err)
-		http.Error(w, "begin tx failed", 500)
-		return
-	}
-	defer tx.Rollback(ctx)
-	_, err = tx.Exec(ctx,
-		`UPDATE pgbench_accounts SET abalance = abalance + $1 WHERE aid = $2`,
-		delta, aid)
-	if err != nil {
-		log.Println(err)
-		http.Error(w, "accounts", 500)
-		return
-	}
-	_, err = tx.Exec(ctx,
-		`UPDATE pgbench_tellers SET tbalance = tbalance + $1 WHERE tid = $2`,
-		delta, tid)
-	if err != nil {
-		log.Println(err)
-		http.Error(w, "tellers", 500)
-		return
-	}
-	_, err = tx.Exec(ctx,
-		`UPDATE pgbench_branches SET bbalance = bbalance + $1 WHERE bid = $2`,
-		delta, bid)
-	if err != nil {
-		log.Println(err)
-		http.Error(w, "branches", 500)
-		return
-	}
-	_, err = tx.Exec(ctx,
-		`INSERT INTO pgbench_history (tid, bid, aid, delta, mtime, filler)
-		 VALUES ($1, $2, $3, $4, now(), repeat('x',22))`,
-		tid, bid, aid, delta)
-	if err != nil {
-		log.Println(err)
-		http.Error(w, "history", 500)
-		return
-	}
-	if err := tx.Commit(ctx); err != nil {
-		log.Println(err)
-		http.Error(w, "commit failed", 500)
+		http.Error(w, "tx failed: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 	w.WriteHeader(http.StatusOK)

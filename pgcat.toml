@@ -1,0 +1,32 @@
+[general]
+host = "0.0.0.0"
+port = 6432
+enable_prometheus_exporter = false
+prometheus_exporter_port = 9930
+worker_threads = 16
+tcp_nodelay = true
+idle_timeout = 30000
+shutdown_timeout = 60000
+ban_time = 60
+connect_timeout = 5000
+healthcheck_timeout = 1000
+# Admin console
+admin_username = "pgcat_admin"
+admin_password = "supersecret"
+[pools.demo]
+pool_mode = "transaction"
+default_role = "primary"
+query_parser_enabled = false
+query_parser_read_write_splitting = false # no replicas
+primary_reads_enabled = false
+prepared_statements = true
+prepared_statements_cache_size = 2000
+[pools.demo.shards.0]
+servers = [ ["postgres", 5432, "primary"] ]
+database = "demo"
+# User that your Go services use
+[pools.demo.users.postgres]
+username = "postgres"
+password = "password"
+pool_size = 180
+statement_timeout = 0

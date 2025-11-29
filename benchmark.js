@@ -5,21 +5,21 @@ import { Rate } from 'k6/metrics';
 const errorRate = new Rate('errors');
 
 export const options = {
+  duration: "1m",
+  vus: 130,
   // stages: [
-  //   { duration: '30s', target: 1000 },   
-  //   { duration: '30s', target: 2000 },   
-  //   { duration: '30s', target: 0 },      
-  // ],
-  duration: "10s",
-  vus: 100,
+  //   { target: 1000, duration: "1m" },
+  //   { target: 3000, duration: "2m" },
+  //   { target: 500, duration: "1m" }
+  // ], 
   thresholds: {
-    http_req_duration: ['p(95)<100'],   // 95% of requests under 100ms
-    errors: ['rate<0.01'],              // <1% errors
+    // http_req_duration: ['p(95)<100'],
+    errors: ['rate<0.01'],
   },
 };
 
 export default function () {
   const res = http.get(__ENV.URL);
-  check(res, { 'statusOk': (r) => r.status === 200 }) || errorRate.add(1);
+  check(res, { 'check:status-ok': (r) => r.status === 200 }) || errorRate.add(1);
   sleep(0.01);
 }

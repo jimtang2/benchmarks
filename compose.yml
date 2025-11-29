@@ -1,34 +1,4 @@
 services:
-  kafka:
-    image: confluentinc/cp-kafka:7.5.0
-    hostname: kafka
-    container_name: kafka-demo
-    ports:
-      - "29092:29092"
-    environment:
-      KAFKA_PROCESS_ROLES: controller,broker
-      KAFKA_NODE_ID: 1
-      KAFKA_LISTENERS: LISTENER_INTERNAL://0.0.0.0:9092,LISTENER_LOCAL://0.0.0.0:29092,CONTROLLER://0.0.0.0:9093
-      KAFKA_ADVERTISED_LISTENERS: LISTENER_INTERNAL://kafka:9092,LISTENER_LOCAL://localhost:29092
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,CONTROLLER:PLAINTEXT,LISTENER_INTERNAL:PLAINTEXT,LISTENER_LOCAL:PLAINTEXT
-      KAFKA_INTER_BROKER_LISTENER_NAME: LISTENER_INTERNAL
-      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
-      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
-      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
-      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
-      CLUSTER_ID: U2hvdyBNZSBEYSBNb25leQ==
-      KAFKA_LOG_RETENTION_HOURS: 24
-      KAFKA_LOG_RETENTION_BYTES: 1073741824
-      KAFKA_LOG_SEGMENT_BYTES: 107374182
-      KAFKA_LOG_CLEANUP_POLICY: delete
-    # volumes:
-    #   - ./data/kafka:/var/lib/kafka/data
-    healthcheck:
-      test: ["CMD", "kafka-broker-api-versions", "--bootstrap-server", "localhost:9092"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
   postgres:
     image: postgres:17.5-alpine
     container_name: postgres-demo
@@ -36,10 +6,9 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: password
       POSTGRES_DB: demo
-      POSTGRES_HOST_AUTH_METHOD: scram-sha-256
     command: 
       - postgres 
-      - -cmax_connections=400
+      - -cmax_connections=1000
       - -cshared_buffers=4GB
       - -ceffective_cache_size=8GB
       - -cwork_mem=16MB
@@ -48,37 +17,85 @@ services:
       - -cmax_parallel_workers_per_gather=4
       - -cmax_worker_processes=16
       - -cmax_parallel_workers=1
-    shm_size: 2gb
-    mem_limit: 8g
+    shm_size: 4gb
+    mem_limit: 16g
     mem_reservation: 4g
     volumes:
       - ./sql:/docker-entrypoint-initdb.d
     ports:
       - "5432:5432"
 
-  go-pgx:
+  pgcat:
+    image: ghcr.io/postgresml/pgcat:latest
+    container_name: pgcat-demo
+    restart: unless-stopped
+    depends_on:
+      - postgres
+    ports:
+      - "6432:6432"
+    volumes:
+      - ./pgcat.toml:/etc/pgcat/pgcat.toml:ro
+
+  go-pq:
+    image: jimtang2/benchmarks/go-pq
     build:
       context: .
-      dockerfile: ./go/pgx/Dockerfile
-    container_name: bench-go-pgx
+      dockerfile: ./go/Dockerfile
+      args:
+        SOURCE_PATH: go/pq
+    container_name: bench-go-pq
     ports:
-      - "9991:8080"
+      - "8080:8080"
     volumes:
       - ./config.yaml:/config/config.yaml
     depends_on:
       - postgres
 
-  go-pq:
+  go-pgx:
+    image: jimtang2/benchmarks/go-pgx
     build:
       context: .
-      dockerfile: ./go/pq/Dockerfile
-    container_name: bench-go-pq
+      dockerfile: ./go/Dockerfile
+      args:
+        SOURCE_PATH: go/pgx
+    container_name: bench-go-pgx
     ports:
-      - "9992:8080"
+      - "8080:8080"
     volumes:
       - ./config.yaml:/config/config.yaml
     depends_on:
       - postgres
+
+  go-pgx-opt:
+    image: jimtang2/benchmarks/go-pgx-opt
+    build:
+      context: .
+      dockerfile: ./go/Dockerfile
+      args:
+        SOURCE_PATH: go/pgx-opt
+    container_name: bench-go-pgx-opt
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./config.yaml:/config/config.yaml
+    depends_on:
+      - postgres
+
+  go-pgx-opt-pool:
+    image: jimtang2/benchmarks/go-pgx-opt
+    build:
+      context: .
+      dockerfile: ./go/Dockerfile
+      args:
+        SOURCE_PATH: go/pgx-opt
+    container_name: bench-go-pgx-opt-pool
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./config.with-pool.yaml:/config/config.yaml
+    depends_on:
+      - postgres
+
 
   # express:
   #   build:

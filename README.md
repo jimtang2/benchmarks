@@ -1,125 +1,101 @@
-Benchmarks of different web servers + PostgreSQL i/o performed on Macbook Air M4 32GB RAM.
+# Comparison of Benchmarks for 7 Different Web Servers with 9 Different SQL Drivers
+
+Benchmarks of different web servers + PostgreSQL i/o.
+
+# Conclusion
+
+
 
 # Results 
 
-| Web Server                  | SQL Driver             | min      | max       | ave      | p(90)    | p(95)    | req/s       | VUs |
-|-----------------------------|------------------------|----------|-----------|----------|----------|----------|-------------|-----|
-| Express.js                  | node-postgres          |          |           |          |          |          |             |     |
-| Express.js                  | porsager/postgres      |          |           |          |          |          |             |     |
-| FastAPI Setup               | asyncpg                |          |           |          |          |          |             |     |
-| FastAPI Setup               | psycopg                |          |           |          |          |          |          |             |     |
-| Go net/http                 | lib/pq                 | 1.21ms   | 131.57ms  | 6.62ms   | 12.37ms  | 16.78ms  | 5976.87   | 100 |
-| Go net/http                 | jackc/pgx              | 717µs    | 115.46ms  | 3.87ms   | 6.86ms   | 9.09ms   | 7158.35   | 100 |
-| Next.js                     | node-postgres          |          |           |          |          |          |             |     |
-| Next.js                     | porsager/postgres      |          |           |          |          |          |             |     |
-| Spring Boot (Undertow)      | —                      |          |           |          |          |          |             |     |
-| Spring Boot (Tomcat)        | —                      |          |           |          |          |          |             |     |
-| Spring Boot (Netty)         | —                      |          |           |          |          |          |             |     |
+- Apple Silicon M4 32GB RAM
+- Docker Desktop 4.53
+- Postgres 17.5 (Docker)
+- grafana/k6
+- threshold: error rate < 0.01
+- duration: 1m sustained
 
-# Configuration
+| Web Server                  | SQL Driver             | RPS    | VUs   | min[ms]  | max[ms]  | avg[ms]  | p90[ms]  | p95[ms]  |
+|-----------------------------|------------------------|--------|-------|----------|----------|----------|----------|----------|
+| Go net/http                 | lib/pq                 | 1,865  |   100 |   1.29   |   510    |    43    |    87    |    115   |
+|                             | jackc/pgx              | 7,171  |   100 |   0.79   |   169    |     3    |     6    |     9    |
+|                             | jackc/pgx (prep. stmt) | 8,640  |   100 |   0.21   |   128    |     1    |     2    |    13    |
+|                             |                        | 9,107  |   130 |   0.30   |   114    |     4    |     8    |    11    |
+|                             |                        | 6,366  |   500 |   0.67   |  2,470   |    68    |    166   |    252   |
+|                     | jackc/pgx (prep. stmt + pgcat) | 7,985  |   100 |    10    |   243    |    12    |    14    |    15    |
+|                             |                        | 8,412  |   130 |   0.69   |    77    |     5    |    10    |    15    |
+|                             |                        | 7,013  |   250 |    10    |   882    |    35    |    72    |    99    |
+|                             |                        | 6,874  |   500 |    29    |   721    |    62    |    100   |    132   |
+|                             |                        | 6,905  | 2,000 |   193    |   950    |   277    |    330   |    361   |
+|                             |                        | 6,550  | 4,000 |    61    |  2,050   |   591    |    675   |    715   |
+|                             |                        | 6,916  | 6,000 |   151    |  2,280   |   846    |    928   |    977   |
+|                             |                        | 5,723  |10,000 |   451    |  3,690   |  1,700   |   2,110  |  2,420   |
+| FastAPI                     | asyncpg                |        |       |          |          |          |          |          |
+| FastAPI                     | psycopg                |        |       |          |          |          |          |          |
+| Express.js                  | node-postgres          |        |       |          |          |          |          |          |
+| Express.js                  | porsager/postgres      |        |       |          |          |          |          |          |
+| Next.js                     | node-postgres          |        |       |          |          |          |          |          |
+| Next.js                     | porsager/postgres      |        |       |          |          |          |          |          |
+| Spring Boot + Undertow      | —                      |        |       |          |          |          |          |          |
+| Spring Boot + Tomcat        | —                      |        |       |          |          |          |          |          |
+| Spring Boot + Netty         | —                      |        |       |          |          |          |          |          |
 
-## Web Servers
+## Setup
 
-1. All web servers to use 1,200 SQL pool size (10MB/connection => 12GB RAM)
-2. All web servers to use prepared SQL statement
+### Workload
 
-### Express.js
-- run with `--experimental-worker --max-old-space-size=8192` 
-
-### FastAPI
-- `asyncpg` vs sync `psycopg`
-- run with `--uvicorn --workers 1`
-
-### Go net/http
-
-### Next.js
-- use server actions or route handlers
-- `@vercel/postgres or neon.tech/serverless`
-- `export const runtime = 'edge'`
-
-### Spring Boot (Undertow)
-- `server.undertow.threads.worker=64`
-- `spring.r2dbc.pool.enabled=true`
-- `spring-boot-starter-webflux + r2dbc-postgresql`
-
-## Test Script
-
-For each web server, we will implement an http handler to execute the following SQL statement (using pgbench OLTP tables):
+#### SQL
 
 ```sql
 BEGIN;
--- 1. udpate account balance (:aid = random account ID (1 .. N×100000))
-UPDATE pgbench_accounts
-   SET abalance = abalance + :delta
- WHERE aid = :aid; -- 
--- 2. read account balance
-SELECT abalance
-  FROM pgbench_accounts
- WHERE aid = :aid;
--- 3. update teller total (:tid = random teller (1 .. N×10))
-UPDATE pgbench_tellers
-   SET tbalance = tbalance + :delta
- WHERE tid = :tid; 
--- 4. update branch total (:bid = random branch (1 .. N))
-UPDATE pgbench_branches
-   SET bbalance = bbalance + :delta
- WHERE bid = :bid;
--- 5. insert history
-INSERT INTO pgbench_history (tid, bid, aid, delta, mtime, filler)
-VALUES (:tid, :bid, :aid, :delta, now(), repeat('x',22));
+  UPDATE pgbench_accounts 
+    SET abalance = abalance + :delta 
+    WHERE aid = :aid; 
+  SELECT abalance 
+    FROM pgbench_accounts 
+    WHERE aid = :aid;
+  UPDATE pgbench_tellers 
+    SET tbalance = tbalance + :delta 
+    WHERE tid = :tid; 
+  UPDATE pgbench_branches 
+    SET bbalance = bbalance + :delta 
+    WHERE bid = :bid;
+  INSERT INTO pgbench_history (tid, bid, aid, delta, mtime, filler) 
+    VALUES (:tid, :bid, :aid, :delta, now(), repeat('x',22));
 END;
 ```
 
-We use `grafana/k6` (install with `brew install k6`):
+### Schema
 
-```bash
-docker compose up -d
-k6 run benchmark.js --env URL=http://localhost:$port
-```
+#### pgbench_accounts
+| | |
+|---------|----------------|
+| aid      | integer       |
+| bid      | integer       |
+| abalance | integer       |
+| filler   | character(84) |
 
-## SQL
+#### pgbench_branches
+| | |
+----------|----------------|
+| bid      | integer       |
+| bbalance | integer       |
+| filler   | character(88) |
 
-### OLTP Schema
+#### pgbench_history
+| | |
+--------|------------------------------|
+| tid    | integer                     |
+| bid    | integer                     |
+| aid    | integer                     |
+| delta  | integer                     |
+| mtime  | timestamp without time zone |
+| filler | character(22)               |
 
-```
-demo=# \d pgbench*
-              Table "public.pgbench_accounts"
-  Column  |     Type      | Collation | Nullable | Default
-----------+---------------+-----------+----------+---------
- aid      | integer       |           | not null |
- bid      | integer       |           |          |
- abalance | integer       |           |          |
- filler   | character(84) |           |          |
-Indexes:
-    "pgbench_accounts_pkey" PRIMARY KEY, btree (aid)
-
-              Table "public.pgbench_branches"
-  Column  |     Type      | Collation | Nullable | Default
-----------+---------------+-----------+----------+---------
- bid      | integer       |           | not null |
- bbalance | integer       |           |          |
- filler   | character(88) |           |          |
-Indexes:
-    "pgbench_branches_pkey" PRIMARY KEY, btree (bid)
-
-                    Table "public.pgbench_history"
- Column |            Type             | Collation | Nullable | Default
---------+-----------------------------+-----------+----------+---------
- tid    | integer                     |           |          |
- bid    | integer                     |           |          |
- aid    | integer                     |           |          |
- delta  | integer                     |           |          |
- mtime  | timestamp without time zone |           |          |
- filler | character(22)               |           |          |
-
-              Table "public.pgbench_tellers"
-  Column  |     Type      | Collation | Nullable | Default
-----------+---------------+-----------+----------+---------
- tid      | integer       |           | not null |
- bid      | integer       |           |          |
- tbalance | integer       |           |          |
- filler   | character(84) |           |          |
-Indexes:
-    "pgbench_tellers_pkey" PRIMARY KEY, btree (tid)
-
-```
+#### pgbench_tellers
+| | |
+----------|----------------|
+| tid      | integer       |
+| bid      | integer       |
+| tbalance | integer       |
+| filler   | character(84) |

@@ -1,0 +1,1 @@
+k6 run benchmark.js --env URL=http://localhost:8080
