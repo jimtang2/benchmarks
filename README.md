@@ -1,24 +1,20 @@
-# Intro
-
-This is a benchmark of different web servers reading/writing to local PostgreSQL database.
+Benchmarks of different web servers + PostgreSQL i/o performed on Macbook Air M4 32GB RAM.
 
 # Results 
 
-For context, each web server is optimized using "out-of-the-box" features and run in Docker.
-
-| Web Server | SQL Driver | min | max | med | ave | p(90) | p(95) | req/s | vus
-----------------------------------------
-| Express.js | node-postgres |  |  |  |   
-| Express.js |  | porsager/postgres |  |  |   
-| FastAPI Setup | asyncpg |  |  |  |   
-| FastAPI Setup | psycopg |  |  |  |   
-| Go net/http | lib/pq | 1.21ms | 131.57ms | 4.81ms | 6.62ms | 12.37ms | 16.78ms | 5976.87/s | 100
-| Go net/http | jackc/pgx | 717µs | 115.46ms | 2.93ms | 3.87ms | 6.86ms | 9.09ms | 7158.35/s | 100
-| Next.js | node-postgres |  |  |  |   
-| Next.js | porsager/postgres |  |  |  |   
-| Spring Boot (Undertow) |  |  |  |  |   
-| Spring Boot (Tomcat) |  |  |  |  |   
-| Spring Boot (Netty) |  |  |  |  |   
+| Web Server                  | SQL Driver             | min      | max       | ave      | p(90)    | p(95)    | req/s       | VUs |
+|-----------------------------|------------------------|----------|-----------|----------|----------|----------|-------------|-----|
+| Express.js                  | node-postgres          |          |           |          |          |          |             |     |
+| Express.js                  | porsager/postgres      |          |           |          |          |          |             |     |
+| FastAPI Setup               | asyncpg                |          |           |          |          |          |             |     |
+| FastAPI Setup               | psycopg                |          |           |          |          |          |          |             |     |
+| Go net/http                 | lib/pq                 | 1.21ms   | 131.57ms  | 6.62ms   | 12.37ms  | 16.78ms  | 5976.87   | 100 |
+| Go net/http                 | jackc/pgx              | 717µs    | 115.46ms  | 3.87ms   | 6.86ms   | 9.09ms   | 7158.35   | 100 |
+| Next.js                     | node-postgres          |          |           |          |          |          |             |     |
+| Next.js                     | porsager/postgres      |          |           |          |          |          |             |     |
+| Spring Boot (Undertow)      | —                      |          |           |          |          |          |             |     |
+| Spring Boot (Tomcat)        | —                      |          |           |          |          |          |             |     |
+| Spring Boot (Netty)         | —                      |          |           |          |          |          |             |     |
 
 # Configuration
 
