@@ -21,8 +21,8 @@ services:
       KAFKA_LOG_RETENTION_BYTES: 1073741824
       KAFKA_LOG_SEGMENT_BYTES: 107374182
       KAFKA_LOG_CLEANUP_POLICY: delete
-    volumes:
-      - ./deploy/data/kafka:/var/lib/kafka/data
+    # volumes:
+    #   - ./data/kafka:/var/lib/kafka/data
     healthcheck:
       test: ["CMD", "kafka-broker-api-versions", "--bootstrap-server", "localhost:9092"]
       interval: 10s
@@ -36,29 +36,95 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: password
       POSTGRES_DB: demo
+      POSTGRES_HOST_AUTH_METHOD: scram-sha-256
+    command: 
+      - postgres 
+      - -cmax_connections=400
+      - -cshared_buffers=4GB
+      - -ceffective_cache_size=8GB
+      - -cwork_mem=16MB
+      - -cmaintenance_work_mem=1GB
+      - -cwal_buffers=16MB
+      - -cmax_parallel_workers_per_gather=4
+      - -cmax_worker_processes=16
+      - -cmax_parallel_workers=1
+    shm_size: 2gb
+    mem_limit: 8g
+    mem_reservation: 4g
     volumes:
-      - ./deploy/data/postgres:/var/lib/postgresql/data
-      - ./deploy/sql:/docker-entrypoint-initdb.d
+      - ./sql:/docker-entrypoint-initdb.d
     ports:
       - "5432:5432"
-    restart: unless-stopped
 
-  server:
+  go-pgx:
     build:
       context: .
-      dockerfile: ./deploy/docker/server.dockerfile
-    container_name: server-demo
-    depends_on:
-      kafka:
-        condition: service_healthy
-    volumes:
-      - ./deploy/config/server:/config:ro
+      dockerfile: ./go/pgx/Dockerfile
+    container_name: bench-go-pgx
     ports:
-      - "8080:8080"
-    restart: on-failure
-    healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:8080/health || kill 1"]
-      interval: 10s
-      timeout: 5s
-      retries: 3
-      start_period: 5s
+      - "9991:8080"
+    volumes:
+      - ./config.yaml:/config/config.yaml
+    depends_on:
+      - postgres
+
+  go-pq:
+    build:
+      context: .
+      dockerfile: ./go/pq/Dockerfile
+    container_name: bench-go-pq
+    ports:
+      - "9992:8080"
+    volumes:
+      - ./config.yaml:/config/config.yaml
+    depends_on:
+      - postgres
+
+  # express:
+  #   build:
+  #     context: .
+  #     dockerfile: ./docker/express.dockerfile
+  #   container_name: bench-express
+  #   ports:
+  #     - "9991:8080"
+  #   volumes:
+  #     - ./config.yaml:/config/config.yaml
+  #   depends_on:
+  #     - postgres
+
+  # fastapi:
+  #   build:
+  #     context: .
+  #     dockerfile: ./docker/fastapi.dockerfile
+  #   container_name: bench-fastapi
+  #   ports:
+  #     - "9992:8080"
+  #   volumes:
+  #     - ./config.yaml:/config/config.yaml
+  #   depends_on:
+  #     - postgres
+
+  # next:
+  #   build:
+  #     context: .
+  #     dockerfile: ./docker/next.dockerfile
+  #   container_name: bench-next
+  #   ports:
+  #     - "9994:8080"
+  #   volumes:
+  #     - ./config.yaml:/config/config.yaml
+  #   depends_on:
+  #     - postgres
+
+  # springboot:
+  #   build:
+  #     context: .
+  #     dockerfile: ./docker/springboot.dockerfile
+  #   container_name: bench-springboot
+  #   ports:
+  #     - "9995:8080"
+  #   volumes:
+  #     - ./config.yaml:/config/config.yaml
+  #   depends_on:
+  #     - postgres
+

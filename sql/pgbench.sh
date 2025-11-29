@@ -1,0 +1,1 @@
+pgbench -i -s 10 demo
