@@ -187,6 +187,7 @@ services:
       - postgres
 
   next:
+    image: jimtang2/benchmarks/next
     build:
       context: .
       dockerfile: ./next/Dockerfile
@@ -219,6 +220,7 @@ services:
         -Dreactor.netty.ioWorkerCount=8 \
         -Dreactor.netty.ioSelectCount=8 \
         -Dio.netty.eventLoopThreads=8
+
   spring-pool:
     image: jimtang2/benchmarks/spring
     build:
