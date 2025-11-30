@@ -6,7 +6,7 @@
 - fastapi
 - express.js
 - next.js
-- spring boot + undertow
+- spring boot + webflux
 
 ### SQL Drivers
 
@@ -83,6 +83,14 @@
 
 ## Setup
 
+### How To Run Benchmarks
+
+1. run `docker compose build` to build all services (you may need to start by configuring Docker resources)
+2. run `docker compose up -d postgres` to start database
+3. run `docker compose up service_name` (check compose.yml for list of services)
+4. configure `benchmark.js` options (vux, duration, or stages)
+5. run `k6 run benchmark.js --env URL=http://localhost:8080` (for next.js, use `http://localhost:8080/api/tx`)
+
 ### Workload
 
 The workload consists in performing the following SQL transactions. We quickly conclude the execution of prepared statement by database engine is most efficient. Performance difference is shown in results for Go net/http + jackc/pgx.
@@ -148,3 +156,4 @@ END;
 - pgcat does not support asyncpg
 - pgcat does not support node-postgres
 - pgcat does not support porsager/postgres
+
