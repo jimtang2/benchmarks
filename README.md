@@ -1,12 +1,24 @@
-# Comparison of Benchmarks Using 7 Web Servers and 9 SQL Drivers
+# Benchmarks of Web Servers and SQL Drivers
 
-Benchmarks of different web servers + PostgreSQL i/o.
+### Web Servers
 
-# Conclusions
+- go net/http
+- fastapi
+- express.js
+- next.js
+- spring boot + undertow
 
+### SQL Drivers
 
+- github.com/lib/pq
+- github.com/jackc/pgx
+- asyncpg
+- psycopg
+- node-postgres
+- porsager/postgres
+- postgresql r2dbc
 
-# Results 
+### Details
 
 - hardware: Apple Silicon M4 (10 cores) 32GB RAM
 - runtime: Docker Desktop 4.53 (8 cores, 24GB RAM, 4GB swap)
@@ -16,7 +28,24 @@ Benchmarks of different web servers + PostgreSQL i/o.
 - load test duration: 3m sustained
 - load success threshold: error rate < 0.01
 
-| Web Server             | SQL Driver             |  VUs | RPS[k] | min[ms] | max[ms] | avg[ms] | p90[ms] | p95[ms] |
+# Top Results
+
+| Rank | Web Server + SQL Driver                    |  VUs | RPS[K] | avg[ms] | p90[ms] |
+|------|--------------------------------------------|------|--------|---------|---------|
+|  1   | go net/http + jackc/pgx                    |  130 |   9.1  |      4  |      8  |
+|  2   | spring boot + webflux + postgresql r2dbc   |  100 |   7.7  |      3  |      5  |
+|  3   | express.js + node-postgres                 |  100 |   5.8  |      7  |      9  |
+|  4   | express.js + porsager/postgres             |  100 |   5.2  |      9  |     13  |
+|  5   | fastapi + asyncpg                          |  130 |   3.7  |     24  |     31  |
+|  6   | fastapi + psycopg                          |  100 |   3.0  |     22  |     36  |
+|  7   | fastapi + psycopg + pgcat                  |  100 |   2.8  |     35  |     51  |
+|  8   | next.js + porsager/postgres                |  100 |   2.6  |     37  |     43  |
+|  9   | go net/http + lib/pq w/o p. stmt           |  100 |   1.8  |     43  |     87  |
+
+
+## Results (Full)
+
+| Web Server             | SQL Driver             |  VUs | RPS[K] | min[ms] | max[ms] | avg[ms] | p90[ms] | p95[ms] |
 |------------------------|------------------------|------|--------|---------|---------|---------|---------|---------|
 | go net/http            | lib/pq w/o p. stmt     |  100 |   1.8  |   1.2   |    510  |     43  |     87  |    115  |
 |                        | jackc/pgx w/o p. stmt  |  100 |   7.1  |    .79  |    169  |      3  |      6  |      9  |
@@ -45,7 +74,7 @@ Benchmarks of different web servers + PostgreSQL i/o.
 |                        |                        |  250 |   4.9  |   4.3   |    1.1s |     41  |     48  |     51  |
 | next.js                | porsager/postgres      |  100 |   2.6  |   4.1   |    543  |     37  |     43  |     47  |
 |                        |                        |  250 |   2.4  |   8.5   |    3.3s |     94  |    112  |    119  |
-| spring boot + undertow | postgresql r2dbc       |  100 |   7.7  |    .29  |     46  |      3  |      5  |      7  |
+| spring boot + we bflux | postgresql r2dbc       |  100 |   7.7  |    .29  |     46  |      3  |      5  |      7  |
 |                        |                        |  130 |   7.5  |   1.9   |     81  |      7  |     10  |     13  |
 |                        |                        |  250 |   7.7  |   3.2   |     83  |     33  |     26  |     27  |
 |                        |                        |  500 |   7.0  |    27   |    192  |     60  |     70  |     77  |

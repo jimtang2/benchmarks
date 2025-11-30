@@ -10,4 +10,4 @@ RUN ./gradlew --no-daemon classes
 COPY spring/src ./src
 RUN ./gradlew --no-daemon build -x test
 EXPOSE 8080
-CMD ["java", "-XX:+UseNUMA", "-XX:+UseParallelGC", "-jar", "build/libs/spring-1.0.0.jar"]
+CMD ["java", "-jar", "build/libs/spring-1.0.0.jar"]

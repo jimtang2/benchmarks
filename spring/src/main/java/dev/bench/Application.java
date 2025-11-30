@@ -1,6 +1,5 @@
 package dev.bench;
 
-import dev.bench.config.YamlConfig;
 import io.r2dbc.postgresql.PostgresqlConnectionConfiguration;
 import io.r2dbc.postgresql.PostgresqlConnectionFactory;
 import io.r2dbc.spi.ConnectionFactory;

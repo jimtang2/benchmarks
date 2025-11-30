@@ -1,14 +1,22 @@
 server:
   port: 8080
-  undertow:
-    threads:
-      io: 32
-      worker: 512
-    max-http-post-size: 0
-
+reactor:
+  netty:
+    pool:
+      max-connections: 500
+      acquire-timeout: 60s
 spring:
   r2dbc:
-    url: r2dbc:postgresql://dummy  # placeholder, overridden at runtime
+    url: r2dbc:postgresql:// # overridden by SPRING_R2DBC_URL
+    pool:
+      enabled: true
+      initial-size: 50
+      max-size: 600
+      max-idle-time: 30m
+      max-create-connection-time: 5s
+      max-acquire-time: 10s
+      acquire-retry: 3
+      background-eviction-interval: 30s
     username: dummy
     password: dummy
   main:

@@ -206,14 +206,19 @@ services:
     container_name: bench-spring
     ports:
       - "8080:8080"
-    volumes:
-      - ./config.yaml:/config/config.yaml
     depends_on:
       - postgres
     environment:
-      - JAVA_TOOL_OPTIONS=-XX:MaxRAMPercentage=75
       - SPRING_R2DBC_URL=r2dbc:postgresql://postgres:password@postgres:5432/demo
-
+      - JAVA_TOOL_OPTIONS= \
+        -XX:+UseZGC \
+        -XX:+ZGenerational \
+        -XX:+UnlockExperimentalVMOptions \
+        -XX:+UseTransparentHugePages \
+        -XX:MaxRAMPercentage=85 \
+        -Dreactor.netty.ioWorkerCount=8 \
+        -Dreactor.netty.ioSelectCount=8 \
+        -Dio.netty.eventLoopThreads=8
   spring-pool:
     image: jimtang2/benchmarks/spring
     build:
@@ -222,10 +227,8 @@ services:
     container_name: bench-spring-pool
     ports:
       - "8080:8080"
-    volumes:
-      - ./config.yaml:/config/config.yaml
     depends_on:
       - postgres
     environment:
-      - JAVA_TOOL_OPTIONS=-XX:MaxRAMPercentage=75
       - SPRING_R2DBC_URL=r2dbc:postgresql://postgres:password@pgcat:6432/demo
+      - JAVA_TOOL_OPTIONS=-XX:+UseZGC -XX:+ZGenerational -XX:+UnlockExperimentalVMOptions -XX:+UseTransparentHugePages -XX:MaxRAMPercentage=85 -Dreactor.netty.ioWorkerCount=8 -Dreactor.netty.ioSelectCount=8 -Dio.netty.eventLoopThreads=8

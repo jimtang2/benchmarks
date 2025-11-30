@@ -1,6 +1,5 @@
 package dev.bench.web;
 
-import dev.bench.config.YamlConfig;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.buffer.DataBufferFactory;
 import org.springframework.http.MediaType;
