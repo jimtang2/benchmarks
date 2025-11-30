@@ -1,0 +1,17 @@
+{
+  "name": "bench-nextjs",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "next build",
+    "start": "next start -p 8080"
+  },
+  "dependencies": {
+    "next": "16.0.5",
+    "react": "19.0.0",
+    "react-dom": "19.0.0",
+    "postgres": "3.4.4",
+    "js-yaml": "4.1.0"
+  }
+}

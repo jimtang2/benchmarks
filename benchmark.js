@@ -5,8 +5,8 @@ import { Rate } from 'k6/metrics';
 const errorRate = new Rate('errors');
 
 export const options = {
-  duration: "1m",
-  vus: 130,
+  duration: "3m",
+  vus: 10000,
   // stages: [
   //   { target: 1000, duration: "1m" },
   //   { target: 3000, duration: "2m" },

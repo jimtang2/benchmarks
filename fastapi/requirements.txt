@@ -1,0 +1,7 @@
+fastapi==0.115.0
+uvicorn[standard]==0.30.6
+asyncpg==0.29.0
+psycopg[binary,pool]==3.2.2
+psycopg_pool==3.2.2
+PyYAML==6.0.2
+dynaconf==3.2.6

@@ -1,0 +1,18 @@
+server:
+  port: 8080
+  undertow:
+    threads:
+      io: 32
+      worker: 512
+    max-http-post-size: 0
+
+spring:
+  r2dbc:
+    url: r2dbc:postgresql://dummy  # placeholder, overridden at runtime
+    username: dummy
+    password: dummy
+  main:
+    banner-mode: off
+logging:
+  level:
+    root: WARN

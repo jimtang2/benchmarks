@@ -18,7 +18,7 @@ services:
       - -cmax_worker_processes=16
       - -cmax_parallel_workers=1
     shm_size: 4gb
-    mem_limit: 16g
+    mem_limit: 24g
     mem_reservation: 4g
     volumes:
       - ./sql:/docker-entrypoint-initdb.d
@@ -96,52 +96,136 @@ services:
     depends_on:
       - postgres
 
+  fastapi-asyncpg:
+    image: jimtang2/benchmarks/fastapi-asyncpg
+    build:
+      context: .
+      dockerfile: ./fastapi/Dockerfile
+      args:
+        SOURCE_PATH: fastapi/asyncpg
+    container_name: bench-fastapi-asyncpg
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./config.yaml:/config/config.yaml
+    depends_on:
+      - postgres
 
-  # express:
-  #   build:
-  #     context: .
-  #     dockerfile: ./docker/express.dockerfile
-  #   container_name: bench-express
-  #   ports:
-  #     - "9991:8080"
-  #   volumes:
-  #     - ./config.yaml:/config/config.yaml
-  #   depends_on:
-  #     - postgres
+  fastapi-psycopg:
+    image: jimtang2/benchmarks/fastapi-psycopg
+    build:
+      context: .
+      dockerfile: ./fastapi/Dockerfile
+      args:
+        SOURCE_PATH: fastapi/psycopg
+    container_name: bench-fastapi-psycopg
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./config.yaml:/config/config.yaml
+    depends_on:
+      - postgres
 
-  # fastapi:
-  #   build:
-  #     context: .
-  #     dockerfile: ./docker/fastapi.dockerfile
-  #   container_name: bench-fastapi
-  #   ports:
-  #     - "9992:8080"
-  #   volumes:
-  #     - ./config.yaml:/config/config.yaml
-  #   depends_on:
-  #     - postgres
+  fastapi-psycopg-pool:
+    image: jimtang2/benchmarks/fastapi-psycopg
+    build:
+      context: .
+      dockerfile: ./fastapi/Dockerfile
+      args:
+        SOURCE_PATH: fastapi/psycopg
+    container_name: bench-fastapi-psycopg-pool
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./config.with-pool.yaml:/config/config.yaml
+    depends_on:
+      - postgres
 
-  # next:
-  #   build:
-  #     context: .
-  #     dockerfile: ./docker/next.dockerfile
-  #   container_name: bench-next
-  #   ports:
-  #     - "9994:8080"
-  #   volumes:
-  #     - ./config.yaml:/config/config.yaml
-  #   depends_on:
-  #     - postgres
+  express-node-postgres:
+    image: jimtang2/benchmarks/express
+    build:
+      context: .
+      dockerfile: ./express/Dockerfile
+      args:
+        SOURCE_PATH: express/node-postgres
+    container_name: bench-express-node-postgres
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./config.yaml:/config/config.yaml
+    depends_on:
+      - postgres
 
-  # springboot:
-  #   build:
-  #     context: .
-  #     dockerfile: ./docker/springboot.dockerfile
-  #   container_name: bench-springboot
-  #   ports:
-  #     - "9995:8080"
-  #   volumes:
-  #     - ./config.yaml:/config/config.yaml
-  #   depends_on:
-  #     - postgres
+  express-porsager-postgres:
+    image: jimtang2/benchmarks/express
+    build:
+      context: .
+      dockerfile: ./express/Dockerfile
+      args:
+        SOURCE_PATH: express/porsager
+    container_name: bench-express-porsager-postgres
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./config.yaml:/config/config.yaml
+    depends_on:
+      - postgres
 
+  express-porsager-postgres-pool:
+    image: jimtang2/benchmarks/express
+    build:
+      context: .
+      dockerfile: ./express/Dockerfile
+      args:
+        SOURCE_PATH: express/porsager
+    container_name: bench-express-porsager-pool
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./config.with-pool.yaml:/config/config.yaml
+    depends_on:
+      - postgres
+
+  next:
+    build:
+      context: .
+      dockerfile: ./next/Dockerfile
+    container_name: bench-next
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./config.yaml:/config/config.yaml
+    depends_on:
+      - postgres
+
+  spring:
+    image: jimtang2/benchmarks/spring
+    build:
+      context: .
+      dockerfile: ./spring/Dockerfile
+    container_name: bench-spring
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./config.yaml:/config/config.yaml
+    depends_on:
+      - postgres
+    environment:
+      - JAVA_TOOL_OPTIONS=-XX:MaxRAMPercentage=75
+      - SPRING_R2DBC_URL=r2dbc:postgresql://postgres:password@postgres:5432/demo
+
+  spring-pool:
+    image: jimtang2/benchmarks/spring
+    build:
+      context: .
+      dockerfile: ./spring/Dockerfile
+    container_name: bench-spring-pool
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./config.yaml:/config/config.yaml
+    depends_on:
+      - postgres
+    environment:
+      - JAVA_TOOL_OPTIONS=-XX:MaxRAMPercentage=75
+      - SPRING_R2DBC_URL=r2dbc:postgresql://postgres:password@pgcat:6432/demo

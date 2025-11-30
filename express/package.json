@@ -1,0 +1,14 @@
+{
+  "name": "bench-express",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.21.1",
+    "pg": "^8.13.0",
+    "postgres": "^3.4.4",
+    "js-yaml": "^4.1.0"
+  }
+}
