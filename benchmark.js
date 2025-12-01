@@ -5,8 +5,8 @@ import { Rate } from 'k6/metrics';
 const errorRate = new Rate('errors');
 
 export const options = {
-  duration: "30s",
-  vus: 150,
+  duration: "3m",
+  vus: 200,
   // stages: [
   //   { target: 1000, duration: "1m" },
   //   { target: 3000, duration: "2m" },
@@ -21,5 +21,5 @@ export const options = {
 export default function () {
   const res = http.get(__ENV.URL);
   check(res, { 'check:status-ok': (r) => r.status === 200 }) || errorRate.add(1);
-  sleep(0.01);
+  sleep(0.005);
 }

@@ -7,19 +7,38 @@ services:
       POSTGRES_PASSWORD: password
       POSTGRES_DB: demo
     command: 
-      - postgres 
-      - -cmax_connections=1000
-      - -cshared_buffers=4GB
-      - -ceffective_cache_size=8GB
-      - -cwork_mem=16MB
-      - -cmaintenance_work_mem=1GB
-      - -cwal_buffers=16MB
+      - postgres
+      - -cmax_connections=4000
+      - -cshared_buffers=6GB
+      - -ceffective_cache_size=18GB
+      - -cwork_mem=32MB
+      - -cmaintenance_work_mem=2GB
+      - -ccheckpoint_timeout=15min
+      - -cmax_wal_size=8GB
+      - -cmin_wal_size=2GB
+      - -ccheckpoint_completion_target=0.9
+      - -cwal_buffers=64MB
+      - -cdefault_statistics_target=500
+      - -crandom_page_cost=1.1
+      - -ceffective_io_concurrency=200
+      - -cmax_worker_processes=12
       - -cmax_parallel_workers_per_gather=4
-      - -cmax_worker_processes=16
-      - -cmax_parallel_workers=1
-    shm_size: 4gb
-    mem_limit: 24g
-    mem_reservation: 4g
+      - -cmax_parallel_workers=12
+      - -cwal_compression=on
+      - -cwal_level=minimal
+      - -cfull_page_writes=off
+      - -cbgwriter_lru_maxpages=1000
+      - -cbgwriter_delay=50ms
+      - -cmax_wal_senders=0
+      - -cmax_replication_slots=0
+      - -carchive_mode=off
+      - -carchive_timeout=0
+    shm_size: 8gb
+    deploy:
+      resources:
+        limits:
+          memory: 24G
+          cpus: '8'
     volumes:
       - ./sql:/docker-entrypoint-initdb.d
     ports:
@@ -234,3 +253,63 @@ services:
     environment:
       - SPRING_R2DBC_URL=r2dbc:postgresql://postgres:password@pgcat:6432/demo
       - JAVA_TOOL_OPTIONS=-XX:+UseZGC -XX:+ZGenerational -XX:+UnlockExperimentalVMOptions -XX:+UseTransparentHugePages -XX:MaxRAMPercentage=85 -Dreactor.netty.ioWorkerCount=8 -Dreactor.netty.ioSelectCount=8 -Dio.netty.eventLoopThreads=8
+
+  rust-axum:
+    image: jimtang2/benchmarks/rust-axum
+    build:
+      context: .
+      dockerfile: ./rust/Dockerfile
+      args:
+        SOURCE_PATH: axum
+    container_name: bench-rust-axum
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./config.yaml:/config/config.yaml
+    depends_on:
+      - postgres
+
+  rust-actix:
+    image: jimtang2/benchmarks/rust-actix
+    build:
+      context: .
+      dockerfile: ./rust/Dockerfile
+      args:
+        TARGET: actix
+    container_name: bench-rust-actix
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./config.yaml:/config/config.yaml
+    depends_on:
+      - postgres
+
+  rust-actix-pool:
+    image: jimtang2/benchmarks/rust-actix
+    build:
+      context: .
+      dockerfile: ./rust/Dockerfile
+      args:
+        TARGET: actix
+    container_name: bench-rust-actix-pool
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./config.with-pool.yaml:/config/config.yaml
+    depends_on:
+      - postgres
+
+  rust-hyper:
+    image: jimtang2/benchmarks/rust-hyper
+    build:
+      context: .
+      dockerfile: ./rust/Dockerfile
+      args:
+        TARGET: hyper
+    container_name: bench-rust-hyper
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./config.yaml:/config/config.yaml
+    depends_on:
+      - postgres
