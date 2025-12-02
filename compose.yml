@@ -56,28 +56,47 @@ services:
       - ./pgcat.toml:/etc/pgcat/pgcat.toml:ro
 
   go-pq:
+    container_name: bench-go-pq
     image: jimtang2/benchmarks/go-pq
     build:
       context: .
       dockerfile: ./go/Dockerfile
       args:
         SOURCE_PATH: go/pq
-    container_name: bench-go-pq
     ports:
       - "8080:8080"
     volumes:
       - ./config.yaml:/config/config.yaml
     depends_on:
       - postgres
+    environment:
+      - RLIMIT_NOFILE=1048576
 
   go-pgx:
+    container_name: bench-go-pgx
     image: jimtang2/benchmarks/go-pgx
     build:
       context: .
       dockerfile: ./go/Dockerfile
       args:
         SOURCE_PATH: go/pgx
-    container_name: bench-go-pgx
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./config.yaml:/config/config.yaml
+    depends_on:
+      - postgres
+    environment:
+      - RLIMIT_NOFILE=1048576
+
+  rust-actix:
+    container_name: bench-rust-actix
+    image: jimtang2/benchmarks/rust-actix
+    build:
+      context: .
+      dockerfile: ./rust/Dockerfile
+      args:
+        TARGET: actix
     ports:
       - "8080:8080"
     volumes:
@@ -85,125 +104,88 @@ services:
     depends_on:
       - postgres
 
-  go-pgx-opt:
-    image: jimtang2/benchmarks/go-pgx-opt
+  spring-webflux:
+    container_name: bench-spring-webflux
+    image: jimtang2/benchmarks/spring-webflux
     build:
       context: .
-      dockerfile: ./go/Dockerfile
-      args:
-        SOURCE_PATH: go/pgx-opt
-    container_name: bench-go-pgx-opt
+      dockerfile: ./spring/Dockerfile
     ports:
       - "8080:8080"
-    volumes:
-      - ./config.yaml:/config/config.yaml
     depends_on:
       - postgres
-
-  go-pgx-opt-pool:
-    image: jimtang2/benchmarks/go-pgx-opt
-    build:
-      context: .
-      dockerfile: ./go/Dockerfile
-      args:
-        SOURCE_PATH: go/pgx-opt
-    container_name: bench-go-pgx-opt-pool
-    ports:
-      - "8080:8080"
-    volumes:
-      - ./config.with-pool.yaml:/config/config.yaml
-    depends_on:
-      - postgres
+    environment:
+      - SPRING_R2DBC_URL=r2dbc:postgresql://postgres:password@pgcat:6432/demo
+      - JAVA_TOOL_OPTIONS=-XX:+UseZGC -XX:+ZGenerational -XX:+UnlockExperimentalVMOptions -XX:+UseTransparentHugePages -XX:MaxRAMPercentage=85 -Dreactor.netty.ioWorkerCount=8 -Dreactor.netty.ioSelectCount=8 -Dio.netty.eventLoopThreads=8
+      - RLIMIT_NOFILE=1048576
 
   fastapi-asyncpg:
+    container_name: bench-fastapi-asyncpg
     image: jimtang2/benchmarks/fastapi-asyncpg
     build:
       context: .
       dockerfile: ./fastapi/Dockerfile
       args:
         SOURCE_PATH: fastapi/asyncpg
-    container_name: bench-fastapi-asyncpg
     ports:
       - "8080:8080"
     volumes:
-      - ./config.yaml:/config/config.yaml
+      - ./config-nopool.yaml:/config/config.yaml
     depends_on:
       - postgres
+    environment:
+      - RLIMIT_NOFILE=1048576
 
   fastapi-psycopg:
+    container_name: bench-fastapi-psycopg
     image: jimtang2/benchmarks/fastapi-psycopg
     build:
       context: .
       dockerfile: ./fastapi/Dockerfile
       args:
         SOURCE_PATH: fastapi/psycopg
-    container_name: bench-fastapi-psycopg
     ports:
       - "8080:8080"
     volumes:
       - ./config.yaml:/config/config.yaml
     depends_on:
       - postgres
-
-  fastapi-psycopg-pool:
-    image: jimtang2/benchmarks/fastapi-psycopg
-    build:
-      context: .
-      dockerfile: ./fastapi/Dockerfile
-      args:
-        SOURCE_PATH: fastapi/psycopg
-    container_name: bench-fastapi-psycopg-pool
-    ports:
-      - "8080:8080"
-    volumes:
-      - ./config.with-pool.yaml:/config/config.yaml
-    depends_on:
-      - postgres
+    environment:
+      - RLIMIT_NOFILE=1048576
 
   express-node-postgres:
+    container_name: bench-express-node-postgres
     image: jimtang2/benchmarks/express
     build:
       context: .
       dockerfile: ./express/Dockerfile
       args:
         SOURCE_PATH: express/node-postgres
-    container_name: bench-express-node-postgres
     ports:
       - "8080:8080"
     volumes:
-      - ./config.yaml:/config/config.yaml
+      - ./config-nopool.yaml:/config/config.yaml
     depends_on:
       - postgres
+    environment:
+      - RLIMIT_NOFILE=1048576
 
-  express-porsager-postgres:
+  express-porsager:
+    container_name: bench-express-porsager
     image: jimtang2/benchmarks/express
     build:
       context: .
       dockerfile: ./express/Dockerfile
       args:
         SOURCE_PATH: express/porsager
-    container_name: bench-express-porsager-postgres
     ports:
       - "8080:8080"
     volumes:
-      - ./config.yaml:/config/config.yaml
+      - ./config-nopool.yaml:/config/config.yaml
     depends_on:
       - postgres
-
-  express-porsager-postgres-pool:
-    image: jimtang2/benchmarks/express
-    build:
-      context: .
-      dockerfile: ./express/Dockerfile
-      args:
-        SOURCE_PATH: express/porsager
-    container_name: bench-express-porsager-pool
-    ports:
-      - "8080:8080"
-    volumes:
-      - ./config.with-pool.yaml:/config/config.yaml
-    depends_on:
-      - postgres
+    environment:
+      - RLIMIT_NOFILE=1048576
 
   next:
     image: jimtang2/benchmarks/next
@@ -214,102 +196,9 @@ services:
     ports:
       - "8080:8080"
     volumes:
-      - ./config.yaml:/config/config.yaml
-    depends_on:
-      - postgres
-
-  spring:
-    image: jimtang2/benchmarks/spring
-    build:
-      context: .
-      dockerfile: ./spring/Dockerfile
-    container_name: bench-spring
-    ports:
-      - "8080:8080"
+      - ./config-nopool.yaml:/config/config.yaml
     depends_on:
       - postgres
     environment:
-      - SPRING_R2DBC_URL=r2dbc:postgresql://postgres:password@postgres:5432/demo
-      - JAVA_TOOL_OPTIONS= \
-        -XX:+UseZGC \
-        -XX:+ZGenerational \
-        -XX:+UnlockExperimentalVMOptions \
-        -XX:+UseTransparentHugePages \
-        -XX:MaxRAMPercentage=85 \
-        -Dreactor.netty.ioWorkerCount=8 \
-        -Dreactor.netty.ioSelectCount=8 \
-        -Dio.netty.eventLoopThreads=8
+      - RLIMIT_NOFILE=1048576
 
-  spring-pool:
-    image: jimtang2/benchmarks/spring
-    build:
-      context: .
-      dockerfile: ./spring/Dockerfile
-    container_name: bench-spring-pool
-    ports:
-      - "8080:8080"
-    depends_on:
-      - postgres
-    environment:
-      - SPRING_R2DBC_URL=r2dbc:postgresql://postgres:password@pgcat:6432/demo
-      - JAVA_TOOL_OPTIONS=-XX:+UseZGC -XX:+ZGenerational -XX:+UnlockExperimentalVMOptions -XX:+UseTransparentHugePages -XX:MaxRAMPercentage=85 -Dreactor.netty.ioWorkerCount=8 -Dreactor.netty.ioSelectCount=8 -Dio.netty.eventLoopThreads=8
-
-  rust-axum:
-    image: jimtang2/benchmarks/rust-axum
-    build:
-      context: .
-      dockerfile: ./rust/Dockerfile
-      args:
-        SOURCE_PATH: axum
-    container_name: bench-rust-axum
-    ports:
-      - "8080:8080"
-    volumes:
-      - ./config.yaml:/config/config.yaml
-    depends_on:
-      - postgres
-
-  rust-actix:
-    image: jimtang2/benchmarks/rust-actix
-    build:
-      context: .
-      dockerfile: ./rust/Dockerfile
-      args:
-        TARGET: actix
-    container_name: bench-rust-actix
-    ports:
-      - "8080:8080"
-    volumes:
-      - ./config.yaml:/config/config.yaml
-    depends_on:
-      - postgres
-
-  rust-actix-pool:
-    image: jimtang2/benchmarks/rust-actix
-    build:
-      context: .
-      dockerfile: ./rust/Dockerfile
-      args:
-        TARGET: actix
-    container_name: bench-rust-actix-pool
-    ports:
-      - "8080:8080"
-    volumes:
-      - ./config.with-pool.yaml:/config/config.yaml
-    depends_on:
-      - postgres
-
-  rust-hyper:
-    image: jimtang2/benchmarks/rust-hyper
-    build:
-      context: .
-      dockerfile: ./rust/Dockerfile
-      args:
-        TARGET: hyper
-    container_name: bench-rust-hyper
-    ports:
-      - "8080:8080"
-    volumes:
-      - ./config.yaml:/config/config.yaml
-    depends_on:
-      - postgres

@@ -1,2 +1,2 @@
-db: postgresql://postgres:password@postgres:5432/demo?sslmode=disable
-db_max_connections: 2000
+db: postgresql://postgres:password@pgcat:6432/demo?sslmode=disable
+db_max_connections: 500

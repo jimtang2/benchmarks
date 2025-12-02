@@ -5,12 +5,12 @@ import { Rate } from 'k6/metrics';
 const errorRate = new Rate('errors');
 
 export const options = {
-  duration: "3m",
-  vus: 200,
+  duration: "30s",
+  vus: 600,
   // stages: [
-  //   { target: 1000, duration: "1m" },
-  //   { target: 3000, duration: "2m" },
-  //   { target: 500, duration: "1m" }
+  //   { target: 150, duration: "10s" },
+  //   { target: 600, duration: "10s" },
+  //   { target: 1200, duration: "10s" }
   // ], 
   thresholds: {
     // http_req_duration: ['p(95)<100'],
